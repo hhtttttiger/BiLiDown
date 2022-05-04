@@ -1,0 +1,85 @@
+﻿<Window x:Class="BiLiDownWPF.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:BiLiDownWPF"
+        mc:Ignorable="d"
+        Title="蒙古上单偷家流" Height="450" Width="800">
+    <Grid>
+        <!--<TextBox x:Name="UrlText" HorizontalAlignment="Left" Margin="47,147,0,0" TextWrapping="Wrap" Tag="输入Url" VerticalAlignment="Top" Width="522"/>-->
+
+
+        <TabControl>
+            <TabItem Header="下载视频">
+                <TabItem.Background>
+                    <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                        <GradientStop Color="#FFF0F0F0"/>
+                        <GradientStop Color="#FFE5E5E5" Offset="1"/>
+                    </LinearGradientBrush>
+                </TabItem.Background>
+                <Grid Background="#FFE5E5E5">
+                    <TextBox x:Name="UrlText" VerticalAlignment="Top" Margin="10,17,239,0" Height="19">
+                        <TextBox.Resources>
+                            <VisualBrush x:Key="HintText" TileMode="None" Opacity="0.5" Stretch="None" AlignmentX="Left">
+                                <VisualBrush.Visual>
+                                    <TextBlock FontStyle="Italic" Text="请输入要解析视频的URL"/>
+                                </VisualBrush.Visual>
+                            </VisualBrush>
+                        </TextBox.Resources>
+                        <TextBox.Style>
+                            <Style TargetType="TextBox">
+                                <Style.Triggers>
+                                    <Trigger Property="Text" Value="{x:Null}">
+                                        <Setter Property="Background" Value="{StaticResource HintText}"/>
+                                    </Trigger>
+                                    <Trigger Property="Text" Value="">
+                                        <Setter Property="Background" Value="{StaticResource HintText}"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+
+                    <Button x:Name="UrlParse" Content="解析地址" HorizontalAlignment="Left" Margin="576,17,0,0" VerticalAlignment="Top" Click="UrlParse_Click"/>
+
+                    <DataGrid x:Name="VideoGrid" Margin="10,58,11,10" AutoGenerateColumns="False">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="选择" x:Uid="">
+                                <!--标题栏-->
+                                <DataGridTemplateColumn.HeaderTemplate>
+                                    <DataTemplate>
+                                        <CheckBox x:Name="CheckAll" Click="CheckAll_Click" Background="White" Visibility="Visible">全选</CheckBox>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.HeaderTemplate>
+
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <!--每行数据栏都增加一个复选框-->
+                                    <DataTemplate>
+                                        <!--对象的名称 用于后面获取对象 设置默认不选中-->
+                                        <CheckBox  Name="IsChecked" IsChecked="{Binding DataContext.IsChecked, RelativeSource={RelativeSource AncestorType={x:Type DataGridRow}}}"></CheckBox>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn >
+
+                            <DataGridTextColumn Header="视频标题" Binding="{Binding Title}" Width="520" />
+                            <DataGridTextColumn Header="下载进度" Binding="{Binding Schedule}" Width="200" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <Button Content="下载选中" x:Name="DownBtn" HorizontalAlignment="Left" Margin="654,17,0,0" VerticalAlignment="Top" Click="DownBtn_Click"/>
+                </Grid>
+            </TabItem>
+            <TabItem Header="设置">
+                <Grid Background="#FFE5E5E5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="18*"/>
+                        <ColumnDefinition Width="379*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="1" HorizontalAlignment="Left" Margin="0,10,0,0" TextWrapping="Wrap" Text="下载文件保存位置：" VerticalAlignment="Top"/>
+                    <TextBox x:Name="SavePathText" Grid.Column="1" HorizontalAlignment="Left" Margin="0,40,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="287" IsEnabled="False" />
+                    <Button x:Name="SavePathBtn" Grid.Column="1" Content="浏 览" HorizontalAlignment="Left" Margin="305,39,0,0" VerticalAlignment="Top" Width="40" Click="SavePathBtn_Click"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
