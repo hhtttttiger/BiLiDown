@@ -80,5 +80,10 @@ namespace BiLiPrometheus.Models
                 }
             }
         }
+
+        /// <summary>
+        /// 是否开始下载
+        /// </summary>
+        public bool IsStart { get; set; } = false;
     }
 }

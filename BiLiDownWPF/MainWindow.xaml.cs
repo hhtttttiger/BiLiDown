@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -19,12 +20,14 @@ namespace BiLiDownWPF
         private readonly IBHttp _bHttp;
         private ObservableCollection<VideoGridData> videoGridDatas = new ObservableCollection<VideoGridData>();
         private bool All_Click_Tag = false; //是否全选标识
+        private string VideoFormat = "mp4";
 
         public MainWindow(IBHttp bHttp)
         {
             InitializeComponent();
             _bHttp = bHttp;
 
+            VideoFormat = this.VideoFormatSel.Text;
             this.SavePathText.Text = AppDomain.CurrentDomain.SetupInformation.ApplicationBase; //保存路径，默认程序路径
         }
 
@@ -99,28 +102,33 @@ namespace BiLiDownWPF
             string re2 = "(\\(.*\\))";
             var downTask = downList.Select(async x =>
             {
-                var save = $@"{this.SavePathText.Text}{x.Title}.flv";
-                await Aria2c.DownloadFileByAria2Async(x.VideoPlayUrl, save, async (s, e) =>
+                var save = $@"{this.SavePathText.Text}{x.Title}";
+                await Aria2c.DownloadFileByAria2Async(x.VideoPlayUrl, save + ".tmp", async (s, e) =>
                 {
                     if (e.Data == null) return;
+
+                    //标识为已下载
+                    await this.Dispatcher.BeginInvoke(() => x.IsStart = true);
 
                     var r = new Regex(re1 + re2, RegexOptions.IgnoreCase | RegexOptions.Singleline);
                     var m = r.Match(e.Data);
                     if (m.Success)
                     {
+                        //正则匹配aria的返回获取进度
                         var rbraces1 = m.Groups[1].ToString().Replace("(", "").Replace(")", "").Replace("%", "").Replace("s", "");
                         if (!string.IsNullOrEmpty(rbraces1))
-                        {
-                            
+                        {                           
                             if(rbraces1 == "OK")
                             {
                                 await this.Dispatcher.BeginInvoke(() => x.Schedule = "100%");
 
-                                if (File.Exists($"{save}"))
+                                if (File.Exists(save + ".tmp"))
                                 {
                                     //存在 
                                     await this.Dispatcher.BeginInvoke(() => x.Schedule = "正在视频转码...");
-                                    await FFmpeg.RunFFmpeg($"-loglevel warning -y  -i \"{x.Title}.flv\"  -disposition:v:1 attached_pic  -metadata title=\"{x.Title}.mp4\" -metadata description=\"\" -metadata album=\"\" -c copy  -c:s mov_text -movflags faststart -strict unofficial \"{x.Title}.mp4\"");
+                                    await FFmpeg.RunFFmpeg($"-loglevel warning -y  -i \"{save}.tmp\"  -disposition:v:1 attached_pic  -metadata title=\"{save}.mp4\" -metadata description=\"\" -metadata album=\"\" -c copy  -c:s mov_text -movflags faststart -strict unofficial \"{save}.{VideoFormat}\"");
+
+                                    File.Delete(save + ".tmp");
                                     await this.Dispatcher.BeginInvoke(() => x.Schedule = "视频转码完成！");
                                 }
                             }
@@ -150,6 +158,17 @@ namespace BiLiDownWPF
                 this.SavePathText.Text = openFileDialog.SelectedPath;
             }
 
+        }
+
+        /// <summary>
+        /// 转码格式选择
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void VideoFormatSel_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            var item = (System.Windows.Controls.ComboBoxItem)e.AddedItems[0];
+            VideoFormat = item.Content == null ? "" : item.Content.ToString();
         }
     }
 }
