@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BiLiDownWPF"
         mc:Ignorable="d"
+        ResizeMode="CanMinimize"
         Title="蒙古上单偷家流" Height="450" Width="800">
     <Grid>
         <!--<TextBox x:Name="UrlText" HorizontalAlignment="Left" Margin="47,147,0,0" TextWrapping="Wrap" Tag="输入Url" VerticalAlignment="Top" Width="522"/>-->
@@ -69,6 +70,8 @@
                     <Button Content="下载选中" x:Name="DownBtn" HorizontalAlignment="Left" Margin="654,17,0,0" VerticalAlignment="Top" Click="DownBtn_Click"/>
                 </Grid>
             </TabItem>
+
+            <!--设置栏-->
             <TabItem Header="设置">
                 <Grid Background="#FFE5E5E5">
                     <Grid.ColumnDefinitions>
@@ -77,12 +80,41 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="1" HorizontalAlignment="Left" Margin="10,38,0,0" TextWrapping="Wrap" Text="下载文件保存位置：" VerticalAlignment="Top"/>
                     <TextBox x:Name="SavePathText" Grid.Column="1" HorizontalAlignment="Left" Margin="10,72,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="469" IsEnabled="False" />
-                    <Button x:Name="SavePathBtn" Grid.Column="1" Content="浏 览" HorizontalAlignment="Left" Margin="503,72,0,0" VerticalAlignment="Top" Width="44" Click="SavePathBtn_Click" Height="17"/>
+                    <Button x:Name="SavePathBtn" Grid.Column="1" Content="浏 览" HorizontalAlignment="Left" Margin="503,71,0,0" VerticalAlignment="Top" Width="41" Click="SavePathBtn_Click" />
+                    
+                    <!--转码-->
                     <ComboBox x:Name="VideoFormatSel" Grid.Column="1" HorizontalAlignment="Left" Margin="10,147,0,0" VerticalAlignment="Top" Width="120" SelectionChanged="VideoFormatSel_SelectionChanged">
                         <ComboBoxItem IsSelected="True">mp4</ComboBoxItem>
                         <ComboBoxItem>flv</ComboBoxItem>
                     </ComboBox>
                     <TextBlock Grid.Column="1" HorizontalAlignment="Left" Margin="10,115,0,0" TextWrapping="Wrap" Text="视频转码为：" VerticalAlignment="Top" RenderTransformOrigin="0.218,-0.753"/>
+                    
+                    <!--Aria2c-->
+                    <TextBlock Grid.Column="1" HorizontalAlignment="Left" Margin="9,204,0,0" TextWrapping="Wrap" Text="使用Aria2c下载：" VerticalAlignment="Top"/>
+                    <CheckBox Grid.Column="1" x:Name="Aria2cChe" HorizontalAlignment="Left" Margin="110,205,0,0" VerticalAlignment="Top" IsChecked="False"/>
+                    <TextBox Grid.Column="1" x:Name="Aria2cPath" IsReadOnly="True" HorizontalAlignment="Left" Margin="10,240,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="469">
+                        <TextBox.Resources>
+                            <VisualBrush x:Key="HintText" TileMode="None" Opacity="0.5" Stretch="None" AlignmentX="Left">
+                                <VisualBrush.Visual>
+                                    <TextBlock FontStyle="Italic" Text="选择Aria2c可执行文件，默认为程序根目录下aria2c.exe"/>
+                                </VisualBrush.Visual>
+                            </VisualBrush>
+                        </TextBox.Resources>
+                        <TextBox.Style>
+                            <Style TargetType="TextBox">
+                                <Style.Triggers>
+                                    <Trigger Property="Text" Value="{x:Null}">
+                                        <Setter Property="Background" Value="{StaticResource HintText}"/>
+                                    </Trigger>
+                                    <Trigger Property="Text" Value="">
+                                        <Setter Property="Background" Value="{StaticResource HintText}"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+                    <Button Grid.Column="1" x:Name="Aria2cSel" Content="浏 览" HorizontalAlignment="Left" Margin="503,240,0,0" VerticalAlignment="Top" Width="41" Click="Aria2cSel_Click"/>
+                    
                 </Grid>
             </TabItem>
         </TabControl>

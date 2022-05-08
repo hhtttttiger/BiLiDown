@@ -17,31 +17,43 @@ namespace BiLiPrometheus
         {
             Console.WriteLine("Hello World FUCK THE BILIBILI!");
 
-            await FFmpeg.RunFFmpeg($"-loglevel warning -y  -i \"【轩辕剑：大道之行】01：黄沙起兮风云涌.flv\"  -disposition:v:1 attached_pic  -metadata title=\"[P1]粤语.mp4\" -metadata description=\"\" -metadata album=\"「四月十六号下午三点之前的一分钟」.补档\" -c copy  -c:s mov_text -movflags faststart -strict unofficial \"【轩辕剑：大道之行】01：黄沙起兮风云涌.mp4\"");
+            //BV1ra411B73z
+            Console.WriteLine("输入BV号");
+            var bv = Console.ReadLine();
 
-            //Console.WriteLine("输入BV号");
-            //var bv = Console.ReadLine();
+#if DEBUG
+            bv = "BV1ra411B73z";
+#endif
 
-            //ServiceCollection services = new ServiceCollection();
-            //services.AddHttpApi<IBHttp>();
-            //var provider = services.BuildServiceProvider();
-            //var http = provider.GetService<IBHttp>();
+            ServiceCollection services = new ServiceCollection();
+            services.AddHttpApi<IBHttp>();
+            services.AddHttpClient();
+            services.AddTransient<HttpClientHelper>();
+            
+            var provider = services.BuildServiceProvider();
+            var http = provider.GetService<IBHttp>();
+            var downHelper = provider.GetService<HttpClientHelper>();
+            
 
+            var videoInfo = await http.GetVideoInfo(bv);
 
-            //var videoInfo = await http.GetVideoInfo(bv);
+            var videoPlay = await http.GetVideoPlay(new VideoPlayReq
+            {
+                bvid = bv,
+                cid = videoInfo.data.cid
+            });
 
-            //var videoPlay = await http.GetVideoPlay(new VideoPlayReq
-            //{
-            //    bvid = bv,
-            //    cid = videoInfo.data.cid
-            //});
+            var url = videoPlay.data.durl[0].url;
 
-            //var url = videoPlay.data.durl[0].url;
+            var save = $@"D:\{videoInfo.data.Title.Trim()}.flv";
 
-            //var save = $@"D:\{videoInfo.data.Title.Trim()}.flv";
-
-            //url = UnicodeDecode(url);
             //await Aria2c.Download(url, save);
+            await downHelper.DownWithGetAsync(url, save, (double x) =>
+            {
+                Console.WriteLine(x);
+            });
+
+            Console.ReadLine();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -50,31 +62,5 @@ namespace BiLiPrometheus
            {
                services.AddHttpApi<IBHttp>();
            });
-
-        public static string UnicodeDecode(string unicodeStr)
-        {
-            if (string.IsNullOrWhiteSpace(unicodeStr) || (!unicodeStr.Contains("\\u") && !unicodeStr.Contains("\\U")))
-            {
-                return unicodeStr;
-            }
-
-            string newStr = Regex.Replace(unicodeStr, @"\\[uU](.{4})", (m) =>
-            {
-                string unicode = m.Groups[1].Value;
-                if (int.TryParse(unicode, System.Globalization.NumberStyles.HexNumber, null, out int temp))
-                {
-                    return ((char)temp).ToString();
-                }
-                else
-                {
-                    return m.Groups[0].Value;
-                }
-            }, RegexOptions.Singleline);
-
-            return newStr;
-        }
-
-
-
     }
 }

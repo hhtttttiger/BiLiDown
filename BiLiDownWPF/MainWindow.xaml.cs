@@ -18,14 +18,16 @@ namespace BiLiDownWPF
     public partial class MainWindow : Window
     {
         private readonly IBHttp _bHttp;
+        private readonly HttpClientHelper _httpClientHelper;
         private ObservableCollection<VideoGridData> videoGridDatas = new ObservableCollection<VideoGridData>();
         private bool All_Click_Tag = false; //是否全选标识
         private string VideoFormat = "mp4";
 
-        public MainWindow(IBHttp bHttp)
+        public MainWindow(IBHttp bHttp, HttpClientHelper httpClientHelper)
         {
             InitializeComponent();
             _bHttp = bHttp;
+            _httpClientHelper = httpClientHelper;
 
             VideoFormat = this.VideoFormatSel.Text;
             this.SavePathText.Text = AppDomain.CurrentDomain.SetupInformation.ApplicationBase; //保存路径，默认程序路径
@@ -103,43 +105,72 @@ namespace BiLiDownWPF
             var downTask = downList.Select(async x =>
             {
                 var save = $@"{this.SavePathText.Text}{x.Title}";
-                await Aria2c.DownloadFileByAria2Async(x.VideoPlayUrl, save + ".tmp", async (s, e) =>
+
+                //使用Aria2c下载
+                if (this.Aria2cChe.IsChecked.Value)
                 {
-                    if (e.Data == null) return;
-
-                    //标识为已下载
-                    await this.Dispatcher.BeginInvoke(() => x.IsStart = true);
-
-                    var r = new Regex(re1 + re2, RegexOptions.IgnoreCase | RegexOptions.Singleline);
-                    var m = r.Match(e.Data);
-                    if (m.Success)
+                    await Aria2c.DownloadFileByAria2Async(x.VideoPlayUrl, save + ".tmp", async (s, e) =>
                     {
-                        //正则匹配aria的返回获取进度
-                        var rbraces1 = m.Groups[1].ToString().Replace("(", "").Replace(")", "").Replace("%", "").Replace("s", "");
-                        if (!string.IsNullOrEmpty(rbraces1))
-                        {                           
-                            if(rbraces1 == "OK")
+                        if (e.Data == null) return;
+
+                        //标识为已下载
+                        await this.Dispatcher.BeginInvoke(() => x.IsStart = true);
+
+                        var r = new Regex(re1 + re2, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                        var m = r.Match(e.Data);
+                        if (m.Success)
+                        {
+                            //正则匹配aria的返回获取进度
+                            var rbraces1 = m.Groups[1].ToString().Replace("(", "").Replace(")", "").Replace("%", "").Replace("s", "");
+                            if (!string.IsNullOrEmpty(rbraces1))
                             {
-                                await this.Dispatcher.BeginInvoke(() => x.Schedule = "100%");
-
-                                if (File.Exists(save + ".tmp"))
+                                if (rbraces1 == "OK")
                                 {
-                                    //存在 
-                                    await this.Dispatcher.BeginInvoke(() => x.Schedule = "正在视频转码...");
-                                    await FFmpeg.RunFFmpeg($"-loglevel warning -y  -i \"{save}.tmp\"  -disposition:v:1 attached_pic  -metadata title=\"{save}.mp4\" -metadata description=\"\" -metadata album=\"\" -c copy  -c:s mov_text -movflags faststart -strict unofficial \"{save}.{VideoFormat}\"");
+                                    await this.Dispatcher.BeginInvoke(() => x.Schedule = "100%");
 
-                                    File.Delete(save + ".tmp");
-                                    await this.Dispatcher.BeginInvoke(() => x.Schedule = "视频转码完成！");
+                                    if (File.Exists(save + ".tmp"))
+                                    {
+                                        //存在 
+                                        await this.Dispatcher.BeginInvoke(() => x.Schedule = "正在视频转码...");
+                                        await FFmpeg.RunFFmpeg($"-loglevel warning -y  -i \"{save}.tmp\"  -disposition:v:1 attached_pic  -metadata title=\"{save}.mp4\" -metadata description=\"\" -metadata album=\"\" -c copy  -c:s mov_text -movflags faststart -strict unofficial \"{save}.{VideoFormat}\"");
+
+                                        File.Delete(save + ".tmp");
+                                        await this.Dispatcher.BeginInvoke(() => x.Schedule = "视频转码完成！");
+                                    }
+                                }
+                                else
+                                {
+                                    await this.Dispatcher.BeginInvoke(() => x.Schedule = $"{rbraces1}%");
                                 }
                             }
-                            else
+
+                        }
+                    });
+                }
+                else
+                {
+                    await _httpClientHelper.DownWithGetAsync(x.VideoPlayUrl, save + ".tmp", async (z) =>
+                    {
+                        if(z == 1)
+                        {
+                            await this.Dispatcher.BeginInvoke(() => x.Schedule = "100%");
+
+                            if (File.Exists(save + ".tmp"))
                             {
-                                await this.Dispatcher.BeginInvoke(() => x.Schedule = $"{rbraces1}%");
+                                //存在 
+                                await this.Dispatcher.BeginInvoke(() => x.Schedule = "正在视频转码...");
+                                await FFmpeg.RunFFmpeg($"-loglevel warning -y  -i \"{save}.tmp\"  -disposition:v:1 attached_pic  -metadata title=\"{save}.mp4\" -metadata description=\"\" -metadata album=\"\" -c copy  -c:s mov_text -movflags faststart -strict unofficial \"{save}.{VideoFormat}\"");
+
+                                File.Delete(save + ".tmp");
+                                await this.Dispatcher.BeginInvoke(() => x.Schedule = "视频转码完成！");
                             }
                         }
-                            
-                    }
-                });
+                        else
+                        {
+                            await this.Dispatcher.BeginInvoke(() => x.Schedule = z.ToString("P"));
+                        }                        
+                    });
+                }
             });
 
             await Task.WhenAll(downTask);
@@ -157,7 +188,6 @@ namespace BiLiDownWPF
             {
                 this.SavePathText.Text = openFileDialog.SelectedPath;
             }
-
         }
 
         /// <summary>
@@ -169,6 +199,20 @@ namespace BiLiDownWPF
         {
             var item = (System.Windows.Controls.ComboBoxItem)e.AddedItems[0];
             VideoFormat = item.Content == null ? "" : item.Content.ToString();
+        }
+
+        /// <summary>
+        /// Ari2c路劲选择
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Aria2cSel_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Forms.OpenFileDialog openFileDialog = new System.Windows.Forms.OpenFileDialog();  //选择文件夹
+            if (openFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                this.Aria2cPath.Text = openFileDialog.FileName;
+            }
         }
     }
 }
