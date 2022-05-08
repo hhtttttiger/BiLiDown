@@ -41,9 +41,19 @@ namespace BiLiDownWPF
 
             //提取BV号
             var url = this.UrlText.Text;
-            var bvWhitPata = url.Split('/')[4];
-            var bv = bvWhitPata.Split('?')[0];
-            bv = bv.Split('#')[0];
+            var bv = "";
+
+            try
+            {
+                var bvWhitPata = url.Split('/')[4];
+                bv = bvWhitPata.Split('?')[0];
+                bv = bv.Split('#')[0];
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("请输入正确的url，例：https://www.bilibili.com/video/BV1hT4y1v7Vg");
+                return;
+            }
 
             //获取视频基本信息
             var videoInfo = await _bHttp.GetVideoInfo(bv);
