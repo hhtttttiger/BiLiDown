@@ -36,7 +36,7 @@ namespace BiLiDownWPF
         private async void UrlParse_Click(object sender, RoutedEventArgs e)
         {
 #if DEBUG
-            this.UrlText.Text = "https://www.bilibili.com/video/BV15D4y1S76Z#reply109762458112";
+            //this.UrlText.Text = "https://www.bilibili.com/video/BV15D4y1S76Z#reply109762458112";
 #endif
 
             //提取BV号
@@ -49,10 +49,11 @@ namespace BiLiDownWPF
             var videoInfo = await _bHttp.GetVideoInfo(bv);
             videoInfo.data.pages.ForEach(x =>
             {
+                var title = videoInfo.data.pages.Count == 1 ? videoInfo.data.Title : x.part;
                 videoGridDatas.Add(new VideoGridData
                 {
                     BVId = bv,
-                    Title = x.part,
+                    Title = title,
                     cId = x.cid,
                     FirstFrame = x.first_frame
                 });
@@ -109,7 +110,10 @@ namespace BiLiDownWPF
                 //使用Aria2c下载
                 if (this.Aria2cChe.IsChecked.Value)
                 {
-                    await Aria2c.DownloadFileByAria2Async(x.VideoPlayUrl, save + ".tmp", async (s, e) =>
+                    var aria2c = this.Aria2cPath.Text;
+                    var ffmpeg = this.FFmpegPath.Text;
+
+                    await Aria2c.DownloadFileByAria2Async(x.VideoPlayUrl, save + ".tmp", aria2c, async (s, e) =>
                     {
                         if (e.Data == null) return;
 
@@ -132,7 +136,8 @@ namespace BiLiDownWPF
                                     {
                                         //存在 
                                         await this.Dispatcher.BeginInvoke(() => x.Schedule = "正在视频转码...");
-                                        await FFmpeg.RunFFmpeg($"-loglevel warning -y  -i \"{save}.tmp\"  -disposition:v:1 attached_pic  -metadata title=\"{save}.mp4\" -metadata description=\"\" -metadata album=\"\" -c copy  -c:s mov_text -movflags faststart -strict unofficial \"{save}.{VideoFormat}\"");
+                                       
+                                        await FFmpeg.RunFFmpeg($"-loglevel warning -y  -i \"{save}.tmp\"  -disposition:v:1 attached_pic  -metadata title=\"{save}.mp4\" -metadata description=\"\" -metadata album=\"\" -c copy  -c:s mov_text -movflags faststart -strict unofficial \"{save}.{VideoFormat}\"", ffmpeg);
 
                                         File.Delete(save + ".tmp");
                                         await this.Dispatcher.BeginInvoke(() => x.Schedule = "视频转码完成！");
@@ -183,7 +188,7 @@ namespace BiLiDownWPF
         /// <param name="e"></param>
         private void SavePathBtn_Click(object sender, RoutedEventArgs e)
         {
-            System.Windows.Forms.FolderBrowserDialog openFileDialog = new System.Windows.Forms.FolderBrowserDialog();  //选择文件夹
+            System.Windows.Forms.FolderBrowserDialog openFileDialog = new System.Windows.Forms.FolderBrowserDialog();
             if (openFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 this.SavePathText.Text = openFileDialog.SelectedPath;
@@ -202,16 +207,30 @@ namespace BiLiDownWPF
         }
 
         /// <summary>
-        /// Ari2c路劲选择
+        /// Ari2c选择
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void Aria2cSel_Click(object sender, RoutedEventArgs e)
         {
-            System.Windows.Forms.OpenFileDialog openFileDialog = new System.Windows.Forms.OpenFileDialog();  //选择文件夹
+            System.Windows.Forms.OpenFileDialog openFileDialog = new System.Windows.Forms.OpenFileDialog();
             if (openFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 this.Aria2cPath.Text = openFileDialog.FileName;
+            }
+        }
+
+        /// <summary>
+        /// FFmpeg路劲选择
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void FFmpegSel_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Forms.OpenFileDialog openFileDialog = new System.Windows.Forms.OpenFileDialog();
+            if (openFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                this.FFmpegPath.Text = openFileDialog.FileName;
             }
         }
     }

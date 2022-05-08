@@ -11,6 +11,9 @@ namespace BiLiPrometheus.Util
     {
         public static async Task RunFFmpeg( string parms, string exe = "ffmpeg")
         {
+            if (string.IsNullOrEmpty(exe))
+                exe = "ffmpeg";
+
             void Output(object sender, DataReceivedEventArgs args)
             {
                 if (string.IsNullOrWhiteSpace(args.Data))

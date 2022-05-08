@@ -114,7 +114,31 @@
                         </TextBox.Style>
                     </TextBox>
                     <Button Grid.Column="1" x:Name="Aria2cSel" Content="浏 览" HorizontalAlignment="Left" Margin="503,240,0,0" VerticalAlignment="Top" Width="41" Click="Aria2cSel_Click"/>
-                    
+
+                    <!--FFmpeg-->
+                    <TextBox Grid.Column="1" x:Name="FFmpegPath" IsReadOnly="True" HorizontalAlignment="Left" Margin="10,290,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="469">
+                        <TextBox.Resources>
+                            <VisualBrush x:Key="HintText" TileMode="None" Opacity="0.5" Stretch="None" AlignmentX="Left">
+                                <VisualBrush.Visual>
+                                    <TextBlock FontStyle="Italic" Text="选择FFmpeg可执行文件，默认为程序根目录下ffmpeg.exe"/>
+                                </VisualBrush.Visual>
+                            </VisualBrush>
+                        </TextBox.Resources>
+                        <TextBox.Style>
+                            <Style TargetType="TextBox">
+                                <Style.Triggers>
+                                    <Trigger Property="Text" Value="{x:Null}">
+                                        <Setter Property="Background" Value="{StaticResource HintText}"/>
+                                    </Trigger>
+                                    <Trigger Property="Text" Value="">
+                                        <Setter Property="Background" Value="{StaticResource HintText}"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+                    <Button Grid.Column="1" x:Name="FFmpegSel" Content="浏 览" HorizontalAlignment="Left" Margin="503,290,0,0" VerticalAlignment="Top" Width="41" Click="FFmpegSel_Click"/>
+
                 </Grid>
             </TabItem>
         </TabControl>

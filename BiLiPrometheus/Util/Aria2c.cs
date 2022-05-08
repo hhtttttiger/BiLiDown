@@ -73,9 +73,10 @@ namespace BiLiPrometheus.Util
         /// <param name="url"></param>
         /// <param name="strFileName"></param>
         /// <returns></returns>
-        public static async Task<bool> DownloadFileByAria2Async(string url, string path, DataReceivedEventHandler output)
+        public static async Task<bool> DownloadFileByAria2Async(string url, string path, string exe, DataReceivedEventHandler output)
         {
-            var tool = "aria2c";
+            if(string.IsNullOrEmpty(exe))
+                exe = "aria2c";
 
             var dir = Path.GetDirectoryName(path);
             var name = Path.GetFileName(path);
@@ -84,7 +85,7 @@ namespace BiLiPrometheus.Util
             headerArgs += " --header=\"Referer: https://www.bilibili.com\"";
             var args = $"-c -x 10 -s 10 --dir={dir} --allow-overwrite=true --out={name} {headerArgs} {url}";
 
-            var info = new ProcessStartInfo(tool, args)
+            var info = new ProcessStartInfo(exe, args)
             {
                 UseShellExecute = false,
                 CreateNoWindow = true,
